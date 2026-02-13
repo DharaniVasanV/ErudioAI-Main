@@ -1,0 +1,12 @@
+node_modules/
+dist/
+.env
+*.log
+.DS_Store
+android/build/
+android/.gradle/
+backend/__pycache__/
+backend/*.db
+backend/venv/
+.vscode/
+*.pyc
