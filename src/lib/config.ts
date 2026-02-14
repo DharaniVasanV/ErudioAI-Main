@@ -1,6 +1,14 @@
 import { Capacitor } from '@capacitor/core';
 
 const getApiBaseUrl = () => {
+  // Production URL - update this after deploying to Render
+  const PRODUCTION_URL = 'https://your-app-name.onrender.com';
+  
+  // Use production URL if set, otherwise use local development
+  if (PRODUCTION_URL !== 'https://your-app-name.onrender.com') {
+    return PRODUCTION_URL;
+  }
+  
   if (Capacitor.isNativePlatform()) {
     // For physical device: use your laptop's IP address
     // For emulator: use 10.0.2.2
