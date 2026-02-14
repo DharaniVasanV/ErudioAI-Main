@@ -8,10 +8,18 @@ Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="ErudioAI API", version="1.0.0")
 
-# CORS middleware
+# CORS middleware - Allow Android emulator
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:3000"],
+    allow_origins=[
+        "http://localhost:5173",
+        "http://localhost:3000",
+        "http://10.0.2.2:5173",
+        "https://localhost",
+        "capacitor://localhost",
+        "ionic://localhost",
+        "http://localhost"
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
