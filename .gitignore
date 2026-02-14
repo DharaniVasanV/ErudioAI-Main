@@ -5,8 +5,10 @@ dist/
 .DS_Store
 android/build/
 android/.gradle/
+android/.idea/
 backend/__pycache__/
 backend/*.db
 backend/venv/
 .vscode/
 *.pyc
+package-lock.json
