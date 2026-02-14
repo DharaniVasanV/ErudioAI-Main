@@ -4,6 +4,7 @@ import { useApp } from '@/app/context/AppContext';
 import { authService } from '@/lib/api';
 import { Capacitor } from '@capacitor/core';
 import { config } from '@/lib/config';
+import { testBackendConnection } from '@/lib/test-connection';
 
 export const LoginPage = () => {
   const [email, setEmail] = useState('');
@@ -24,6 +25,15 @@ export const LoginPage = () => {
     try {
       // Check if running on Android
       if (Capacitor.isNativePlatform()) {
+        // Test backend connection first
+        try {
+          await testBackendConnection();
+        } catch (error) {
+          alert('Cannot connect to backend. Make sure backend is running on your PC at http://localhost:8000');
+          console.error('Backend connection test failed:', error);
+          return;
+        }
+
         const { androidGoogleSignIn } = await import('@/lib/android-auth');
         const authResponse = await androidGoogleSignIn();
         login(authResponse.user.email, authResponse.user.name);
