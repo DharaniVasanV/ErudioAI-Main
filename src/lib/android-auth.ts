@@ -9,13 +9,12 @@ export const androidGoogleSignIn = async () => {
   }
 
   try {
-    // Use Capacitor plugin for Google Sign-In
-    // Install: npm install @codetrix-studio/capacitor-google-auth
     const { GoogleAuth } = await import('@codetrix-studio/capacitor-google-auth');
     
     await GoogleAuth.initialize({
-      clientId: config.android.googleClientId,
+      clientId: config.web.googleClientId, // Use WEB client ID, not Android
       scopes: ['profile', 'email'],
+      grantOfflineAccess: true,
     });
 
     const result = await GoogleAuth.signIn();
