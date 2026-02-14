@@ -5,7 +5,9 @@ const config: CapacitorConfig = {
   appName: 'ErudioAI',
   webDir: 'dist',
   server: {
-    androidScheme: 'https'
+    androidScheme: 'https',
+    cleartext: true,
+    allowNavigation: ['*']
   },
   plugins: {
     SplashScreen: {
