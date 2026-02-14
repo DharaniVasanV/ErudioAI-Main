@@ -1,4 +1,4 @@
-const API_BASE_URL = 'http://localhost:8000';
+import { config } from './config';
 
 export interface AuthResponse {
   access_token: string;
@@ -13,7 +13,7 @@ export interface AuthResponse {
 
 export const authService = {
   async googleLogin(googleToken: string): Promise<AuthResponse> {
-    const response = await fetch(`${API_BASE_URL}/auth/google`, {
+    const response = await fetch(`${config.api.baseUrl}/auth/google`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
