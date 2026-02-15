@@ -18,7 +18,9 @@ app.add_middleware(
         "https://localhost",
         "capacitor://localhost",
         "ionic://localhost",
-        "http://localhost"
+        "http://localhost",
+        "https://erudioai.netlify.app",
+        "https://*.netlify.app"
     ],
     allow_credentials=True,
     allow_methods=["*"],
