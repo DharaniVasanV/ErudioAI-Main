@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useApp } from '@/app/context/AppContext';
+import { authService } from '@/lib/api';
+import { Capacitor } from '@capacitor/core';
+import { config } from '@/lib/config';
 
 export const SignupPage = () => {
   const [name, setName] = useState('');
@@ -17,6 +20,55 @@ export const SignupPage = () => {
       navigate('/dashboard');
     }
   };
+
+  const handleGoogleLogin = async () => {
+    try {
+      // Check if running on Android
+      if (Capacitor.isNativePlatform()) {
+        const { androidGoogleSignIn } = await import('@/lib/android-auth');
+        const authResponse = await androidGoogleSignIn();
+        signup(authResponse.user.name, authResponse.user.email, 'College');
+        localStorage.setItem('access_token', authResponse.access_token);
+        navigate('/dashboard');
+        return;
+      }
+
+      // Web Google Sign-In
+      const google = (window as any).google;
+      if (!google) {
+        alert('Google Sign-In not loaded');
+        return;
+      }
+
+      google.accounts.id.initialize({
+        client_id: config.web.googleClientId,
+        callback: async (response: any) => {
+          try {
+            const authResponse = await authService.googleLogin(response.credential);
+            signup(authResponse.user.name, authResponse.user.email, 'College');
+            localStorage.setItem('access_token', authResponse.access_token);
+            navigate('/dashboard');
+          } catch (error) {
+            console.error('Google login failed:', error);
+            alert('Google login failed');
+          }
+        },
+        use_fedcm_for_prompt: false
+      });
+
+      // Render button instead of prompt
+      google.accounts.id.renderButton(
+        document.getElementById('googleSignInButton'),
+        { theme: 'outline', size: 'large', width: 400 }
+      );
+    } catch (error) {
+      console.error('Google login error:', error);
+    }
+  };
+
+  React.useEffect(() => {
+    handleGoogleLogin();
+  }, []);
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[80vh] px-4">
@@ -78,6 +130,10 @@ export const SignupPage = () => {
             Sign up
           </button>
         </form>
+
+        <div className="mt-6">
+          <div id="googleSignInButton" className="flex justify-center"></div>
+        </div>
 
         <p className="text-center mt-6 text-sm text-gray-600">
           Already have an account? <Link to="/login" className="text-indigo-600 font-semibold hover:underline">Log in</Link>
