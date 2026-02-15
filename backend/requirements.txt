@@ -6,3 +6,4 @@ PyJWT
 python-multipart
 google-auth
 python-dotenv
+requests
