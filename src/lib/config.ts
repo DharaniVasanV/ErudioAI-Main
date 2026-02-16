@@ -1,5 +1,3 @@
-import { Capacitor } from '@capacitor/core';
-
 const getApiBaseUrl = () => {
   // Production URL - backend is deployed on Render
   const PRODUCTION_URL = 'https://erudioai-backend.onrender.com';

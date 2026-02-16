@@ -64,6 +64,17 @@ export const UploadFlow = () => {
     isDragActive: isTimetableDragActive 
   } = useDropzone({ onDrop: onDropTimetable });
 
+  // Calendar Dropzone setup
+  const [calendarFiles, setCalendarFiles] = useState<File[]>([]);
+  const onDropCalendar = (acceptedFiles: File[]) => {
+    setCalendarFiles(prev => [...prev, ...acceptedFiles]);
+  };
+  const { 
+    getRootProps: getCalendarRootProps, 
+    getInputProps: getCalendarInputProps, 
+    isDragActive: isCalendarDragActive 
+  } = useDropzone({ onDrop: onDropCalendar });
+
   if (isGenerating) {
     return (
       <div className="min-h-screen bg-indigo-50 flex flex-col items-center justify-center p-6 text-center">
@@ -164,9 +175,32 @@ export const UploadFlow = () => {
                 
                 <div className="mt-6 pt-6 border-t border-gray-100">
                    <p className="text-sm text-gray-500 mb-3">Or upload calendar file</p>
-                   <div className="border border-dashed border-gray-300 rounded-lg p-4 text-center text-sm text-gray-500 bg-gray-50 cursor-pointer hover:bg-gray-100">
-                     Upload Calendar (PDF/Image)
+                   <div 
+                     {...getCalendarRootProps()}
+                     className={clsx(
+                       "border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors",
+                       isCalendarDragActive ? "border-indigo-500 bg-indigo-50" : "border-gray-300 bg-gray-50 hover:bg-gray-100"
+                     )}
+                   >
+                     <input {...getCalendarInputProps()} />
+                     <Upload size={24} className="mx-auto mb-2 text-gray-400" />
+                     <p className="text-sm text-gray-600 font-medium">Upload Calendar (PDF/Image)</p>
                    </div>
+                   {calendarFiles.length > 0 && (
+                     <div className="mt-4 space-y-2">
+                       {calendarFiles.map((file, idx) => (
+                         <div key={idx} className="flex items-center justify-between bg-gray-50 p-3 rounded-lg border border-gray-200">
+                           <span className="text-sm text-gray-600 truncate">{file.name}</span>
+                           <button 
+                             onClick={() => setCalendarFiles(prev => prev.filter((_, i) => i !== idx))}
+                             className="text-red-500 hover:text-red-700 text-xs font-medium"
+                           >
+                             Remove
+                           </button>
+                         </div>
+                       ))}
+                     </div>
+                   )}
                 </div>
               </div>
             </div>
