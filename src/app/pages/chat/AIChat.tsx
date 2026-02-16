@@ -12,7 +12,7 @@ type Message = {
 };
 
 export const AIChat = () => {
-  const { user, addToHistory } = useApp();
+  const { user, addRecentActivity } = useApp();
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState<Message[]>([
     { id: '1', role: 'assistant', text: `Hi ${user?.name.split(' ')[0] || 'there'}! I'm your ErudioAI companion. How can I help you study today?`, time: 'Now' }
@@ -51,13 +51,12 @@ export const AIChat = () => {
       
       // Add to history only on first interaction of session? For now just mock.
       if (messages.length === 1) {
-        addToHistory({
+        addRecentActivity({
             id: Date.now().toString(),
             title: 'Chat about ' + userMsg.text.slice(0, 20) + '...',
             type: 'Chat',
-            subject: 'General',
-            date: new Date().toISOString(),
-            timestamp: 'Just now'
+            timestamp: 'Just now',
+            refId: 'chat-' + Date.now()
         });
       }
     }, 1500);
