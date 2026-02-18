@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Button, Input } from '@/app/components/ui/Base';
 import { Send, Mic, User, Bot, Paperclip } from 'lucide-react';
 import { useApp } from '@/app/context/AppContext';
