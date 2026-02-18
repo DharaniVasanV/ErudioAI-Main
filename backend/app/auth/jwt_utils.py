@@ -5,6 +5,7 @@ import os
 from dotenv import load_dotenv
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from sqlalchemy.orm import Session
 
 load_dotenv()
 
@@ -35,7 +36,13 @@ def verify_token(token: str):
     except jwt.InvalidTokenError:
         return None
 
-async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
+async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security), db: Session = Depends(lambda: None)):
+    from ..database.connection import get_db
+    from ..models.user import User
+    
+    if db is None:
+        db = next(get_db())
+    
     token = credentials.credentials
     token_data = verify_token(token)
     if token_data is None:
@@ -43,4 +50,11 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid authentication credentials",
         )
-    return token_data.user_id
+    
+    user = db.query(User).filter(User.id == token_data.user_id).first()
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User not found",
+        )
+    return user
