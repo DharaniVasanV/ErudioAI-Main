@@ -12,7 +12,8 @@ from .database.connection import get_db
 from .models.chat import Conversation, ChatMessageDB
 
 # Gemini client
-client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
+api_key = os.getenv("GEMINI_API_KEY")
+client = genai.Client(api_key=api_key) if api_key else None
 
 router = APIRouter(prefix="/chat", tags=["chat"])
 
@@ -93,6 +94,9 @@ async def chat(
     for m in req.messages:
         contents.append({"role": m.role, "parts": m.content})
 
+    if not client:
+        raise ValueError("GEMINI_API_KEY not configured")
+    
     resp = client.models.generate_content(
         model="gemini-3.5-flash",  # or any available chat model
         contents=contents,
