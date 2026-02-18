@@ -98,11 +98,22 @@ async def chat(
     if not client:
         raise ValueError("GEMINI_API_KEY not configured")
     
-    resp = client.models.generate_content(
-        model="gemini-1.5-flash",
-        contents=prompt,
-    )
-    full_text = resp.text
+    # Try different model names
+    models = ["gemini-2.0-flash","gemini-2.0-flash-exp", "gemini-1.5-flash", "gemini-1.5-pro", "gemini-pro"]
+    full_text = None
+    
+    for model_name in models:
+        try:
+            resp = client.models.generate_content(
+                model=model_name,
+                contents=prompt,
+            )
+            full_text = resp.text
+            break
+        except Exception as e:
+            if model_name == models[-1]:
+                raise Exception(f"All models failed. Last error: {str(e)}")
+            continue
 
     # 4) Extract topic name
     match = re.search(r"TOPIC_NAME:\s*(.+)", full_text)
