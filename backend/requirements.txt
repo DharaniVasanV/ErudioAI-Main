@@ -1,9 +1,10 @@
 fastapi
-uvicorn[standard]
+uvicorn
 sqlalchemy
 psycopg2-binary
 PyJWT
 python-multipart
 google-auth
+google-genai
 python-dotenv
 requests
