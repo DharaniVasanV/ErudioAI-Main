@@ -28,7 +28,7 @@ export const SignupPage = () => {
         const { androidGoogleSignIn } = await import('@/lib/android-auth');
         const authResponse = await androidGoogleSignIn();
         signup(authResponse.user.name, authResponse.user.email, 'College');
-        localStorage.setItem('access_token', authResponse.access_token);
+        localStorage.setItem('token', authResponse.access_token);
         navigate('/dashboard');
         return;
       }
@@ -46,7 +46,7 @@ export const SignupPage = () => {
           try {
             const authResponse = await authService.googleLogin(response.credential);
             signup(authResponse.user.name, authResponse.user.email, 'College');
-            localStorage.setItem('access_token', authResponse.access_token);
+            localStorage.setItem('token', authResponse.access_token);
             navigate('/dashboard');
           } catch (error) {
             console.error('Google login failed:', error);
