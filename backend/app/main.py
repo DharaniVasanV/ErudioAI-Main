@@ -21,7 +21,6 @@ app.add_middleware(
         "ionic://localhost",
         "http://localhost",
         "https://erudioai.netlify.app",
-        "https://*.netlify.app",
     ],
     allow_credentials=True,
     allow_methods=["*"],
