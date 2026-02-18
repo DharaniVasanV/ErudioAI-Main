@@ -15,7 +15,7 @@ import { TopicDetailPage } from '@/app/pages/TopicDetailPage';
 import { QuizPage } from '@/app/pages/QuizPage';
 import { AnalyticsPage } from '@/app/pages/AnalyticsPage';
 import { UploadFlow } from '@/app/pages/UploadFlow';
-import { AIChatPage } from '@/app/pages/AIChatPage';
+import { AIChat } from '@/app/pages/chat/AIChat';
 import { RemedialVideoPage } from '@/app/pages/RemedialVideoPage';
 import { RevisionModePage } from '@/app/pages/RevisionModePage';
 import { NotificationsPage } from '@/app/pages/NotificationsPage';
@@ -47,8 +47,8 @@ const AppRoutes = () => {
         <Route path="lessons/:topicId" element={<TopicDetailPage />} />
         <Route path="quiz" element={<QuizPage />} />
         <Route path="analytics" element={<AnalyticsPage />} />
-        <Route path="chat" element={<AIChatPage />} />
-        <Route path="chat/:chatId" element={<AIChatPage />} />
+        <Route path="chat" element={<AIChat />} />
+        <Route path="chat/:chatId" element={<AIChat />} />
         <Route path="notifications" element={<NotificationsPage />} />
         <Route path="exams" element={<ExamsPage />} />
         <Route path="reports" element={<ReportsPage />} />
