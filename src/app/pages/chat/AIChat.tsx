@@ -64,6 +64,12 @@ export const AIChat = () => {
         }),
       });
 
+      if (!res.ok) {
+        const error = await res.text();
+        console.error('API Error:', res.status, error);
+        throw new Error(`API Error: ${res.status}`);
+      }
+
       const data: {
         reply_text: string;
         suggested_topic?: string;
