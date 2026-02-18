@@ -90,16 +90,17 @@ async def chat(
         db.commit()
 
     # 3) Build conversation for Gemini
-    contents = [{"role": "user", "parts": SYSTEM_PROMPT}]
-    for m in req.messages:
-        contents.append({"role": m.role, "parts": m.content})
-
+    user_messages = [m.content for m in req.messages if m.role == "user"]
+    last_message = user_messages[-1] if user_messages else "Hello"
+    
+    prompt = f"{SYSTEM_PROMPT}\n\nUser: {last_message}"
+    
     if not client:
         raise ValueError("GEMINI_API_KEY not configured")
     
     resp = client.models.generate_content(
         model="gemini-1.5-flash",
-        contents=contents,
+        contents=prompt,
     )
     full_text = resp.text
 
