@@ -3,6 +3,7 @@ import { Button, Input } from '@/app/components/ui/Base';
 import { Send, Mic, User, Bot, Paperclip } from 'lucide-react';
 import { useApp } from '@/app/context/AppContext';
 import { cn } from '@/app/components/ui/Base';
+import { config } from '@/lib/config';
 
 type Message = {
   id: string;
@@ -12,8 +13,6 @@ type Message = {
   suggestedTopic?: string;
   showSuggestion?: boolean;
 };
-
-const API_BASE = 'http://localhost:8000'; // adjust if needed
 
 export const AIChat = () => {
   const { user, addRecentActivity } = useApp();
@@ -49,11 +48,12 @@ export const AIChat = () => {
     setIsTyping(true);
 
     try {
-      const res = await fetch(`${API_BASE}/chat`, {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${config.api.baseUrl}/chat`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          // include Authorization header if you use JWT
+          'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({
           conversation_id: conversationId,
@@ -101,9 +101,13 @@ export const AIChat = () => {
 
   const handleAddToPlan = async (messageId: string, topic: string) => {
     try {
-      await fetch(`${API_BASE}/chat/add-to-plan`, {
+      const token = localStorage.getItem('token');
+      await fetch(`${config.api.baseUrl}/chat/add-to-plan`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
         body: JSON.stringify({
           topic_name: topic,
           conversation_id: conversationId,
