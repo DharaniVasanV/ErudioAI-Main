@@ -98,7 +98,7 @@ async def chat(
         raise ValueError("GEMINI_API_KEY not configured")
     
     resp = client.models.generate_content(
-        model="gemini-3.5-flash",  # or any available chat model
+        model="gemini-1.5-flash",
         contents=contents,
     )
     full_text = resp.text
