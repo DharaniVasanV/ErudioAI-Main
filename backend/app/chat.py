@@ -1,19 +1,19 @@
 import os
 import re
 from typing import List, Optional
-
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
-from google import genai
+import requests
 
 from .auth.jwt_utils import get_current_user
 from .database.connection import get_db
 from .models.chat import Conversation, ChatMessageDB
 
-# Gemini client
-api_key = os.getenv("GEMINI_API_KEY")
-client = genai.Client(api_key=api_key) if api_key else None
+HF_API_TOKEN = os.getenv("HF_API_TOKEN")
+HF_MODEL_ID = os.getenv("HF_MODEL_ID")
+HF_API_URL = f"https://api-inference.huggingface.co/models/{HF_MODEL_ID}"
+HF_HEADERS = {"Authorization": f"Bearer {HF_API_TOKEN}"}
 
 router = APIRouter(prefix="/chat", tags=["chat"])
 
@@ -27,31 +27,46 @@ You are ErudioAI, a friendly study assistant for school and college students.
 TOPIC_NAME: <short topic name>
 """
 
-
 class ChatMessage(BaseModel):
     role: str  # "user" or "assistant"
     content: str
 
-
 class ChatRequest(BaseModel):
     messages: List[ChatMessage]
     conversation_id: Optional[str] = None  # null/new = create new conv
-
 
 class ChatResponse(BaseModel):
     reply_text: str
     suggested_topic: Optional[str] = None
     conversation_id: str
 
-
 class AddToPlanRequest(BaseModel):
     topic_name: str
     conversation_id: Optional[str] = None
 
-
 class AddToPlanResponse(BaseModel):
     message: str
 
+def call_hf_chat(prompt: str) -> str:
+    """
+    Sends a prompt to Hugging Face Inference API and returns generated text.
+    """
+    payload = {
+        "inputs": prompt,
+        "parameters": {
+            "max_new_tokens": 512,
+            "temperature": 0.7,
+        }
+    }
+    resp = requests.post(HF_API_URL, headers=HF_HEADERS, json=payload, timeout=60)
+    resp.raise_for_status()
+    data = resp.json()
+    # Text-generation models usually return a list with 'generated_text'
+    if isinstance(data, list) and "generated_text" in data[0]:
+        return data[0]["generated_text"]
+    if isinstance(data, dict) and "generated_text" in data:
+        return data["generated_text"]
+    raise RuntimeError(f"Unexpected HF response format: {data}")
 
 @router.post("", response_model=ChatResponse)
 async def chat(
@@ -89,36 +104,20 @@ async def chat(
         db.add(db_msg)
         db.commit()
 
-    # 3) Build conversation for Gemini
-    user_messages = [m.content for m in req.messages if m.role == "user"]
-    last_message = user_messages[-1] if user_messages else "Hello"
-    
-    prompt = f"{SYSTEM_PROMPT}\n\nUser: {last_message}"
-    
-    if not client:
-        raise ValueError("GEMINI_API_KEY not configured")
-    
-    # Try different model names
-    models = ["gemini-2.0-flash","gemini-2.5-flash","gemini-3-flash","gemini-3-flash-preview","gemini-2.0-flash-exp", "gemini-1.5-flash", "gemini-1.5-pro", "gemini-pro"]
-    full_text = None
-    
-    for model_name in models:
-        try:
-            resp = client.models.generate_content(
-                model=model_name,
-                contents=prompt,
-            )
-            full_text = resp.text
-            break
-        except Exception as e:
-            if model_name == models[-1]:
-                raise Exception(f"All models failed. Last error: {str(e)}")
-            continue
+    # 3) Build plain text conversation
+    conversation_text = ""
+    for m in req.messages:
+        role = "User" if m.role == "user" else "Assistant"
+        conversation_text += f"{role}: {m.content}\n"
 
-    # 4) Extract topic name
+    prompt = SYSTEM_PROMPT + "\n\nConversation so far:\n" + conversation_text + "\nAssistant:"
+
+    full_text = call_hf_chat(prompt)
+
+    # 4) Extract TOPIC_NAME
     match = re.search(r"TOPIC_NAME:\s*(.+)", full_text)
     suggested_topic = match.group(1).strip() if match else None
-    clean_text = re.sub(r"TOPIC_NAME:.*", "", full_text).strip()
+    clean_text = re.sub(r"TOPIC_NAME:.*", "", full_text, flags=re.DOTALL).strip()
 
     # 5) Save assistant message
     db_msg = ChatMessageDB(
@@ -131,10 +130,9 @@ async def chat(
 
     return ChatResponse(
         reply_text=clean_text,
-        suggested_topic=suggested_topic,
+        suggested_topic=suggest_topic,
         conversation_id=str(conv.id),
     )
-
 
 @router.post("/add-to-plan", response_model=AddToPlanResponse)
 async def add_to_plan(
