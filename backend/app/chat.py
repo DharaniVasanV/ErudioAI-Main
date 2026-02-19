@@ -59,6 +59,8 @@ def call_hf_chat(prompt: str) -> str:
         }
     }
     resp = requests.post(HF_API_URL, headers=HF_HEADERS, json=payload, timeout=60)
+    if resp.status_code != 200:
+        print(f"HF Error {resp.status_code}: {resp.text}")
     resp.raise_for_status()
     data = resp.json()
     # Text-generation models usually return a list with 'generated_text'
