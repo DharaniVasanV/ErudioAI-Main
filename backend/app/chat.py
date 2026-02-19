@@ -4,16 +4,15 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
-import requests
+from google import genai
 
 from .auth.jwt_utils import get_current_user
 from .database.connection import get_db
 from .models.chat import Conversation, ChatMessageDB
 
-HF_API_TOKEN = os.getenv("HF_API_TOKEN")
-HF_MODEL_ID = os.getenv("HF_MODEL_ID")
-HF_API_URL = f"https://api-inference.huggingface.co/models/{HF_MODEL_ID}"
-HF_HEADERS = {"Authorization": f"Bearer {HF_API_TOKEN}"}
+# Gemini client
+api_key = os.getenv("GEMINI_API_KEY")
+client = genai.Client(api_key=api_key) if api_key else None
 
 router = APIRouter(prefix="/chat", tags=["chat"])
 
@@ -46,29 +45,6 @@ class AddToPlanRequest(BaseModel):
 
 class AddToPlanResponse(BaseModel):
     message: str
-
-def call_hf_chat(prompt: str) -> str:
-    """
-    Sends a prompt to Hugging Face Inference API and returns generated text.
-    """
-    payload = {
-        "inputs": prompt,
-        "parameters": {
-            "max_new_tokens": 512,
-            "temperature": 0.7,
-        }
-    }
-    resp = requests.post(HF_API_URL, headers=HF_HEADERS, json=payload, timeout=60)
-    if resp.status_code != 200:
-        print(f"HF Error {resp.status_code}: {resp.text}")
-    resp.raise_for_status()
-    data = resp.json()
-    # Text-generation models usually return a list with 'generated_text'
-    if isinstance(data, list) and "generated_text" in data[0]:
-        return data[0]["generated_text"]
-    if isinstance(data, dict) and "generated_text" in data:
-        return data["generated_text"]
-    raise RuntimeError(f"Unexpected HF response format: {data}")
 
 @router.post("", response_model=ChatResponse)
 async def chat(
@@ -106,15 +82,43 @@ async def chat(
         db.add(db_msg)
         db.commit()
 
-    # 3) Build plain text conversation
-    conversation_text = ""
+    # 3) Build conversation for Gemini
+    if not client:
+        raise ValueError("GEMINI_API_KEY not configured")
+
+    # Format history for Gemini
+    contents = []
     for m in req.messages:
-        role = "User" if m.role == "user" else "Assistant"
-        conversation_text += f"{role}: {m.content}\n"
+        role = "user" if m.role == "user" else "model"
+        contents.append({
+            "role": role,
+            "parts": [{"text": m.content}]
+        })
 
-    prompt = SYSTEM_PROMPT + "\n\nConversation so far:\n" + conversation_text + "\nAssistant:"
-
-    full_text = call_hf_chat(prompt)
+    # Call Gemini
+    model_name = "gemini-2.0-flash" # Use a stable flash model
+    try:
+        resp = client.models.generate_content(
+            model=model_name,
+            contents=contents,
+            config={
+                "system_instruction": SYSTEM_PROMPT
+            }
+        )
+        full_text = resp.text
+    except Exception as e:
+        # Fallback to older flash if 2.0 fails for some reason
+        try:
+            resp = client.models.generate_content(
+                model="gemini-1.5-flash",
+                contents=contents,
+                config={
+                    "system_instruction": SYSTEM_PROMPT
+                }
+            )
+            full_text = resp.text
+        except Exception as e2:
+            raise Exception(f"Gemini API call failed: {str(e2)}")
 
     # 4) Extract TOPIC_NAME
     match = re.search(r"TOPIC_NAME:\s*(.+)", full_text)
@@ -142,6 +146,6 @@ async def add_to_plan(
     user=Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    # TODO: later create Topic + StudyBlock here
     print(f"User {user.id} requested to add topic:", body.topic_name)
     return AddToPlanResponse(message="Added to plan (stub)")
+
