@@ -95,30 +95,38 @@ async def chat(
             "parts": [{"text": m.content}]
         })
 
-    # Call Gemini
-    model_name = "gemini-2.0-flash" # Use a stable flash model
-    try:
-        resp = client.models.generate_content(
-            model=model_name,
-            contents=contents,
-            config={
-                "system_instruction": SYSTEM_PROMPT
-            }
-        )
-        full_text = resp.text
-    except Exception as e:
-        # Fallback to older flash if 2.0 fails for some reason
+    # Try different Gemini model names
+    models_to_try = [
+        "gemini-2.0-flash",
+        "gemini-1.5-flash",
+        "gemini-1.5-flash-8b",
+        "gemini-1.5-pro",
+        "gemini-2.0-flash-exp",
+        "gemini-2.5-flash",
+        "gemini-3-flash-preview"
+    ]
+    
+    full_text = None
+    last_error = None
+
+    for model_name in models_to_try:
         try:
             resp = client.models.generate_content(
-                model="gemini-1.5-flash",
+                model=model_name,
                 contents=contents,
                 config={
                     "system_instruction": SYSTEM_PROMPT
                 }
             )
             full_text = resp.text
-        except Exception as e2:
-            raise Exception(f"Gemini API call failed: {str(e2)}")
+            if full_text:
+                break
+        except Exception as e:
+            last_error = e
+            continue
+
+    if not full_text:
+        raise Exception(f"All Gemini models failed. Last error: {str(last_error)}")
 
     # 4) Extract TOPIC_NAME
     match = re.search(r"TOPIC_NAME:\s*(.+)", full_text)
