@@ -1,9 +1,10 @@
 const getApiBaseUrl = () => {
+  // Use local backend when running in dev mode (npm run dev)
+  if (import.meta.env.DEV) {
+    return 'http://localhost:8000';
+  }
   // Production URL - backend is deployed on Render
-  const PRODUCTION_URL = 'https://erudioai-backend.onrender.com';
-  
-  // Always use production URL (backend is online, no localhost needed)
-  return PRODUCTION_URL;
+  return 'https://erudioai-backend.onrender.com';
 };
 
 export const config = {
