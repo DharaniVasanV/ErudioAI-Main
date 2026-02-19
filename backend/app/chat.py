@@ -130,7 +130,7 @@ async def chat(
 
     return ChatResponse(
         reply_text=clean_text,
-        suggested_topic=suggest_topic,
+        suggested_topic=suggested_topic,
         conversation_id=str(conv.id),
     )
 
