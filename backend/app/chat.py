@@ -46,6 +46,38 @@ class AddToPlanRequest(BaseModel):
 class AddToPlanResponse(BaseModel):
     message: str
 
+import requests
+
+def call_custom_hf_chat(api_url: str, prompt: str) -> str:
+    """
+    Sends a prompt to a custom Hugging Face-compatible API (e.g. Colab/Ngrok)
+    """
+    payload = {
+        "inputs": prompt,
+        "parameters": {
+            "max_new_tokens": 512,
+            "temperature": 0.7,
+        }
+    }
+    # Append /generate if not present, assuming the Colab code uses @app.post("/generate")
+    if not api_url.endswith("/generate"):
+        api_url = f"{api_url.rstrip('/')}/generate"
+        
+    print(f"Calling Custom HF API: {api_url}")
+    try:
+        resp = requests.post(api_url, json=payload, timeout=60)
+        resp.raise_for_status()
+        data = resp.json()
+        if "generated_text" in data:
+            return data["generated_text"]
+        # Fallback for list response
+        if isinstance(data, list) and len(data) > 0 and "generated_text" in data[0]:
+             return data[0]["generated_text"]
+        return str(data)
+    except Exception as e:
+        print(f"Custom API Error: {e}")
+        raise e
+
 @router.post("", response_model=ChatResponse)
 async def chat(
     req: ChatRequest,
@@ -82,51 +114,67 @@ async def chat(
         db.add(db_msg)
         db.commit()
 
-    # 3) Build conversation for Gemini
-    if not client:
-        raise ValueError("GEMINI_API_KEY not configured")
-
-    # Format history for Gemini
-    contents = []
-    for m in req.messages:
-        role = "user" if m.role == "user" else "model"
-        contents.append({
-            "role": role,
-            "parts": [{"text": m.content}]
-        })
-
-    # Try different Gemini model names
-    models_to_try = [
-        "gemini-2.0-flash",
-        "gemini-1.5-flash",
-        "gemini-1.5-flash-8b",
-        "gemini-1.5-pro",
-        "gemini-2.0-flash-exp",
-        "gemini-2.5-flash",
-        "gemini-3-flash-preview"
-    ]
-    
+    # 3) Generate Response
     full_text = None
-    last_error = None
+    suggested_topic = None
 
-    for model_name in models_to_try:
+    # Check for custom HF API URL (e.g. Colab/Ngrok)
+    hf_api_url = os.getenv("HF_API_URL")
+    
+    if hf_api_url and hf_api_url.strip():
         try:
-            resp = client.models.generate_content(
-                model=model_name,
-                contents=contents,
-                config={
-                    "system_instruction": SYSTEM_PROMPT
-                }
-            )
-            full_text = resp.text
-            if full_text:
-                break
+            full_text = call_custom_hf_chat(hf_api_url, prompt)
         except Exception as e:
-            last_error = e
-            continue
-
+            print(f"Custom HF API failed: {e}")
+            # Fallback to Gemini if custom URL fails
+            pass
+            
     if not full_text:
-        raise Exception(f"All Gemini models failed. Last error: {str(last_error)}")
+        # Fallback to Gemini
+        if not client:
+             raise ValueError("GEMINI_API_KEY not configured and Custom HF URL failed")
+
+        # Format history for Gemini
+        contents = []
+        for m in req.messages:
+            role = "user" if m.role == "user" else "model"
+            contents.append({
+                "role": role,
+                "parts": [{"text": m.content}]
+            })
+
+        # Try different Gemini model names
+        models_to_try = [
+            "gemini-2.0-flash",
+            "gemini-3.1-pro",
+            "gemini-2.5-flash",
+            "gemini-1.5-flash",
+            "gemini-1.5-flash-8b",
+            "gemini-1.5-pro",
+            "gemini-2.0-flash-exp",
+            "gemini-3-flash-preview"
+        ]
+        
+        last_error = None
+
+        for model_name in models_to_try:
+            try:
+                resp = client.models.generate_content(
+                    model=model_name,
+                    contents=contents,
+                    config={
+                        "system_instruction": SYSTEM_PROMPT
+                    }
+                )
+                full_text = resp.text
+                if full_text:
+                    break
+            except Exception as e:
+                last_error = e
+                continue
+
+        if not full_text:
+             raise Exception(f"All models failed. Last Gemini error: {str(last_error)}")
 
     # 4) Extract TOPIC_NAME
     match = re.search(r"TOPIC_NAME:\s*(.+)", full_text)
