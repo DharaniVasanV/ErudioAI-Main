@@ -46,6 +46,11 @@ class AddToPlanRequest(BaseModel):
 class AddToPlanResponse(BaseModel):
     message: str
 
+class ConversationSchema(BaseModel):
+    id: str
+    title: str
+    created_at: str
+
 
 
 @router.post("", response_model=ChatResponse)
@@ -162,4 +167,25 @@ async def add_to_plan(
 ):
     print(f"User {user.id} requested to add topic:", body.topic_name)
     return AddToPlanResponse(message="Added to plan (stub)")
+
+@router.get("/history", response_model=List[ConversationSchema])
+async def get_chat_history(
+    user=Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    convs = (
+        db.query(Conversation)
+        .filter_by(user_id=user.id)
+        .order_by(Conversation.created_at.desc())
+        .limit(10)
+        .all()
+    )
+    return [
+        ConversationSchema(
+            id=str(c.id),
+            title=c.title,
+            created_at=c.created_at.isoformat()
+        )
+        for c in convs
+    ]
 

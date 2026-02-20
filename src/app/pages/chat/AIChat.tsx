@@ -95,11 +95,11 @@ export const AIChat = () => {
 
       if (messages.length === 1) {
         addRecentActivity({
-          id: Date.now().toString(),
+          id: data.conversation_id,
           title: 'Chat about ' + userMsg.text.slice(0, 20) + '...',
           type: 'Chat',
           timestamp: 'Just now',
-          refId: 'chat-' + Date.now(),
+          refId: data.conversation_id,
         });
       }
     } catch (err) {
@@ -114,7 +114,7 @@ export const AIChat = () => {
       const token = localStorage.getItem('token');
       await fetch(`${config.api.baseUrl}/chat/add-to-plan`, {
         method: 'POST',
-        headers: { 
+        headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
@@ -201,7 +201,7 @@ export const AIChat = () => {
                         code({ node, inline, className, children, ...props }: any) {
                           const [copied, setCopied] = useState(false);
                           const match = /language-(\w+)/.exec(className || '');
-                          
+
                           const handleCopy = () => {
                             navigator.clipboard.writeText(String(children).replace(/\n$/, ''));
                             setCopied(true);

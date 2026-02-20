@@ -17,6 +17,8 @@ import {
   ChatMessage,
 } from "@/app/types";
 import { toast } from "sonner";
+import { config } from "@/lib/config";
+import { formatDistanceToNow } from "date-fns";
 
 interface AppContextType {
   user: User | null;
@@ -249,7 +251,7 @@ const MOCK_NOTIFICATIONS: Notification[] = [
     id: "n1",
     type: "remedial_content",
     title: "New remedial video ready",
-    message:"Video generated for Quadratic Equations based on your last quiz",
+    message: "Video generated for Quadratic Equations based on your last quiz",
     read: false,
     timestamp: "1 hour ago",
     priority: "high",
@@ -403,6 +405,46 @@ export const AppProvider = ({
     }
   }, []);
 
+  // Load chat history from backend
+  useEffect(() => {
+    if (isAuthenticated) {
+      const fetchHistory = async () => {
+        try {
+          const token = localStorage.getItem('token');
+          if (!token) return;
+
+          const res = await fetch(`${config.api.baseUrl}/chat/history`, {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          });
+          
+          if (res.ok) {
+            const data = await res.json();
+            const historyActivities = data.map((conv: any) => ({
+              id: conv.id,
+              type: 'Chat' as const,
+              title: conv.title,
+              timestamp: formatDistanceToNow(new Date(conv.created_at), { addSuffix: true }),
+              refId: conv.id
+            }));
+            
+            setRecentActivity(prev => {
+              // Remove mock chat 'a1' and any previous chat history we loaded
+              // to avoid duplication, then prepend new history
+              const others = prev.filter(a => a.id !== 'a1' && a.type !== 'Chat');
+              return [...historyActivities, ...others];
+            });
+          }
+        } catch (error) {
+          console.error('Error fetching chat history:', error);
+        }
+      };
+      
+      fetchHistory();
+    }
+  }, [isAuthenticated]);
+
   const login = (email: string, name?: string) => {
     const userData = {
       id: "u1",
@@ -411,13 +453,13 @@ export const AppProvider = ({
       level: "College" as const,
       streak: 12,
     };
-    
+
     setUser(userData);
     setIsAuthenticated(true);
-    
+
     // Save to localStorage
     localStorage.setItem('erudio_user', JSON.stringify(userData));
-    
+
     toast.success(`Welcome back, ${userData.name}!`);
   };
 
@@ -429,23 +471,23 @@ export const AppProvider = ({
       level: (level as "School" | "College" | "Other") || "College",
       streak: 0,
     };
-    
+
     setUser(userData);
     setIsAuthenticated(true);
-    
+
     // Save to localStorage
     localStorage.setItem('erudio_user', JSON.stringify(userData));
-    
+
     toast.success(`Account created successfully! Welcome, ${name}!`);
   };
 
   const logout = () => {
     setUser(null);
     setIsAuthenticated(false);
-    
+
     // Remove from localStorage
     localStorage.removeItem('erudio_user');
-    
+
     toast.success('Signed out successfully');
   };
 
@@ -566,10 +608,10 @@ export const AppProvider = ({
       prev.map((t) =>
         t.id === topicId
           ? {
-              ...t,
-              score,
-              status: score >= 80 ? "Mastered" : "In progress",
-            }
+            ...t,
+            score,
+            status: score >= 80 ? "Mastered" : "In progress",
+          }
           : t,
       ),
     );
