@@ -9,6 +9,8 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import { format } from 'date-fns';
+import { toast } from 'sonner';
 
 type Message = {
   id: string;
@@ -22,7 +24,7 @@ type Message = {
 export const AIChat = () => {
   const { chatId } = useParams<{ chatId?: string }>();
   const navigate = useNavigate();
-  const { user, addRecentActivity } = useApp();
+  const { user, addRecentActivity, addTimeBlock } = useApp();
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState<Message[]>([]);
   const [conversationId, setConversationId] = useState<string | null>(chatId || null);
@@ -161,7 +163,7 @@ export const AIChat = () => {
   const handleAddToPlan = async (messageId: string, topic: string) => {
     try {
       const token = localStorage.getItem('token');
-      await fetch(`${config.api.baseUrl}/chat/add-to-plan`, {
+      const res = await fetch(`${config.api.baseUrl}/chat/add-to-plan`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -173,6 +175,21 @@ export const AIChat = () => {
         }),
       });
 
+      if (res.ok) {
+        const data = await res.json();
+        // Add to frontend timetable
+        addTimeBlock({
+          id: `ai-${Date.now()}`,
+          day: data.suggested_day || format(new Date(), 'EEEE'),
+          startTime: data.suggested_time || '18:00',
+          endTime: '19:00',
+          title: `Study: ${topic}`,
+          type: 'Study',
+          topicId: 't-new',
+        });
+        toast.success(data.message || 'Added to your study plan!');
+      }
+
       setMessages(prev =>
         prev.map(m =>
           m.id === messageId ? { ...m, showSuggestion: false } : m
@@ -180,6 +197,7 @@ export const AIChat = () => {
       );
     } catch (e) {
       console.error(e);
+      toast.error('Failed to add to plan');
     }
   };
 

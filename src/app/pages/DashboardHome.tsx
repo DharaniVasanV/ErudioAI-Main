@@ -1,6 +1,5 @@
-import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MessageSquare, UploadCloud, Play, BrainCircuit, Clock, ChevronRight, CheckCircle2, Circle, Flame, CalendarDays } from 'lucide-react';
+import { MessageSquare, UploadCloud, CalendarDays, Flame, Circle } from 'lucide-react';
 import { useApp } from '@/app/context/AppContext';
 import { clsx } from 'clsx';
 import { format } from 'date-fns';
@@ -14,12 +13,16 @@ export const DashboardHome = () => {
     navigate(`/chat/${chatId}`);
   };
 
+  const currentDay = format(new Date(), 'EEEE');
   const todaysPlan = timetable
-    .filter(t => t.day === 'Monday') // Mocking "Today" as Monday
+    .filter(t => t.day === currentDay)
     .sort((a, b) => a.startTime.localeCompare(b.startTime))
-    .slice(0, 3); // Top 3
+    .slice(0, 3);
 
   const nextExam = exams[0];
+  const examDaysRemaining = nextExam
+    ? Math.ceil((new Date(nextExam.date).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
+    : null;
 
   // Get high-priority unread notifications for inline banners
   const priorityNotifications = notifications
@@ -149,7 +152,16 @@ export const DashboardHome = () => {
             </div>
             <div>
               <p className="text-xs text-slate-500 font-medium uppercase">Upcoming Exam</p>
-              <p className="text-lg font-bold text-slate-900">{nextExam.name} <span className="text-slate-400 font-normal text-sm">in 12 days</span></p>
+              <p className="text-lg font-bold text-slate-900">
+                {nextExam.name}
+                <span className="text-slate-400 font-normal text-sm ml-2">
+                  {examDaysRemaining !== null ? (
+                    examDaysRemaining > 0 ? `in ${examDaysRemaining} days` :
+                      examDaysRemaining === 0 ? 'Today!' :
+                        `${Math.abs(examDaysRemaining)} days ago`
+                  ) : 'No date set'}
+                </span>
+              </p>
             </div>
           </div>
         )}

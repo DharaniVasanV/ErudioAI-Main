@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '@/app/context/AppContext';
 import { Calendar, Trophy, Target, ChevronRight, FileText, Clock, AlertCircle } from 'lucide-react';
 import { clsx } from 'clsx';
 import { toast } from 'sonner';
+import { formatDistanceToNow } from 'date-fns';
 
 export const ExamsPage = () => {
   const { exams, subjects } = useApp();
@@ -11,8 +12,9 @@ export const ExamsPage = () => {
 
   const handleStartTest = (testType: 'weekly' | 'monthly') => {
     toast.success(`Starting ${testType} test...`);
-    // Navigate to quiz page with test context
-    navigate('/quiz', { state: { testType } });
+    // Navigate to quiz page with test context. Use first subject for weekly test prototype.
+    const topicName = subjects.length > 0 ? `${subjects[0].name} Weekly Review` : 'General Weekly Review';
+    navigate('/quiz', { state: { testType, topicName } });
   };
 
   const handleViewReport = () => {
@@ -27,7 +29,7 @@ export const ExamsPage = () => {
           <h1 className="text-2xl font-bold text-slate-900">Exams & Tests</h1>
           <p className="text-slate-500">Prepare with practice tests and track upcoming exams</p>
         </div>
-        <button 
+        <button
           onClick={handleViewReport}
           className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-indigo-700 transition-colors shadow-sm"
         >
@@ -47,7 +49,7 @@ export const ExamsPage = () => {
         <div className="p-4 space-y-3">
           {exams.length > 0 ? (
             exams.map(exam => (
-              <div 
+              <div
                 key={exam.id}
                 className="p-4 border border-gray-200 rounded-xl hover:border-indigo-300 hover:bg-indigo-50/30 transition-all cursor-pointer group"
                 onClick={() => navigate('/analytics')}
@@ -70,7 +72,7 @@ export const ExamsPage = () => {
                       </span>
                     </div>
                   </div>
-                  <button 
+                  <button
                     className="text-indigo-600 font-medium text-sm hover:underline flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity"
                     onClick={(e) => {
                       e.stopPropagation();
@@ -118,7 +120,7 @@ export const ExamsPage = () => {
                 ))}
               </ul>
             </div>
-            <button 
+            <button
               onClick={() => handleStartTest('weekly')}
               className="w-full bg-purple-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-purple-700 transition-colors"
             >
@@ -143,7 +145,7 @@ export const ExamsPage = () => {
                 <li>• Detailed performance report</li>
               </ul>
             </div>
-            <button 
+            <button
               onClick={() => handleStartTest('monthly')}
               className="w-full bg-indigo-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-indigo-700 transition-colors"
             >
@@ -159,36 +161,38 @@ export const ExamsPage = () => {
           <h2 className="font-bold text-slate-900">Recent Test Results</h2>
         </div>
         <div className="p-4 space-y-3">
-          {/* Mock test results */}
-          <div className="p-4 border border-gray-200 rounded-xl flex items-center justify-between hover:bg-gray-50 transition-colors cursor-pointer"
-            onClick={handleViewReport}
-          >
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center font-bold">
-                85%
-              </div>
-              <div>
-                <h4 className="font-medium text-slate-900">Weekly Test - Week 42</h4>
-                <p className="text-sm text-slate-500">Completed 2 days ago</p>
-              </div>
-            </div>
-            <ChevronRight size={20} className="text-gray-400" />
-          </div>
+          {(() => {
+            const results = JSON.parse(localStorage.getItem('quiz_results') || '[]');
+            if (results.length === 0) {
+              return <p className="text-center py-4 text-slate-500 italic">No tests taken yet. Start a quiz to see your progress!</p>;
+            }
 
-          <div className="p-4 border border-gray-200 rounded-xl flex items-center justify-between hover:bg-gray-50 transition-colors cursor-pointer"
-            onClick={handleViewReport}
-          >
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center font-bold">
-                78%
+            return results.slice(0, 5).map((res: any, idx: number) => (
+              <div
+                key={idx}
+                className="p-4 border border-gray-200 rounded-xl flex items-center justify-between hover:bg-gray-50 transition-colors cursor-pointer"
+                onClick={handleViewReport}
+              >
+                <div className="flex items-center gap-4">
+                  <div className={clsx(
+                    "w-12 h-12 rounded-full flex items-center justify-center font-bold",
+                    res.score >= 80 ? "bg-green-100 text-green-600" :
+                      res.score >= 60 ? "bg-yellow-100 text-yellow-600" :
+                        "bg-red-100 text-red-600"
+                  )}>
+                    {res.score}%
+                  </div>
+                  <div>
+                    <h4 className="font-medium text-slate-900">{res.testType === 'practice' ? `Practice: ${res.topicName}` : res.topicName}</h4>
+                    <p className="text-sm text-slate-500">
+                      Completed {formatDistanceToNow(new Date(res.timestamp), { addSuffix: true })}
+                    </p>
+                  </div>
+                </div>
+                <ChevronRight size={20} className="text-gray-400" />
               </div>
-              <div>
-                <h4 className="font-medium text-slate-900">Monthly Exam - October</h4>
-                <p className="text-sm text-slate-500">Completed 1 week ago</p>
-              </div>
-            </div>
-            <ChevronRight size={20} className="text-gray-400" />
-          </div>
+            ));
+          })()}
         </div>
       </div>
     </div>

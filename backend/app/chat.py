@@ -45,6 +45,8 @@ class AddToPlanRequest(BaseModel):
 
 class AddToPlanResponse(BaseModel):
     message: str
+    suggested_day: str
+    suggested_time: str
 
 class ConversationSchema(BaseModel):
     id: str
@@ -56,6 +58,25 @@ class MessageSchema(BaseModel):
     role: str
     text: str
     created_at: str
+
+class QuizQuestionSchema(BaseModel):
+    question: str
+    options: List[str]
+    correct: int
+
+class QuizResponseSchema(BaseModel):
+    topic: str
+    questions: List[QuizQuestionSchema]
+
+class TopicContentSchema(BaseModel):
+    topic: str
+    introduction: str
+    key_concepts: List[str]
+    formulas: List[str]
+    example_problem: dict # {"question": str, "solution": str}
+
+class GenerateRequest(BaseModel):
+    topic_name: str
 
 
 
@@ -171,8 +192,18 @@ async def add_to_plan(
     user=Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
+    # For now, suggest tomorrow at current time or next available slot
+    from datetime import datetime, timedelta
+    tomorrow = datetime.now() + timedelta(days=1)
+    day_name = tomorrow.strftime("%A")
+    time_slot = "18:00" # Default study time
+    
     print(f"User {user.id} requested to add topic:", body.topic_name)
-    return AddToPlanResponse(message="Added to plan (stub)")
+    return AddToPlanResponse(
+        message=f"Added '{body.topic_name}' to your plan for {day_name}",
+        suggested_day=day_name,
+        suggested_time=time_slot
+    )
 
 @router.get("/history", response_model=List[ConversationSchema])
 async def get_chat_history(
@@ -235,4 +266,75 @@ async def delete_conversation(
     db.delete(conv)
     db.commit()
     return {"message": "Conversation deleted"}
+
+@router.post("/generate-quiz", response_model=QuizResponseSchema)
+async def generate_quiz(
+    req: GenerateRequest,
+    user=Depends(get_current_user),
+):
+    if not client:
+        raise ValueError("GEMINI_API_KEY not configured")
+
+    prompt = f"""
+    Create a 5-question multiple choice quiz about the topic: {req.topic_name}
+    Return the response as a valid JSON object with this structure:
+    {{
+        "topic": "{req.topic_name}",
+        "questions": [
+            {{
+                "question": "question text",
+                "options": ["opt1", "opt2", "opt3", "opt4"],
+                "correct": 0
+            }}
+        ]
+    }}
+    Ensure exactly 5 questions.
+    """
+    
+    # Use flash for speed
+    resp = client.models.generate_content(
+        model="gemini-1.5-flash",
+        contents=prompt,
+        config={
+            "response_mime_type": "application/json"
+        }
+    )
+    
+    import json
+    return json.loads(resp.text)
+
+@router.post("/generate-topic-content", response_model=TopicContentSchema)
+async def generate_topic_content(
+    req: GenerateRequest,
+    user=Depends(get_current_user),
+):
+    if not client:
+        raise ValueError("GEMINI_API_KEY not configured")
+
+    prompt = f"""
+    Generate study content for the topic: {req.topic_name}
+    Return the response as a valid JSON object with this structure:
+    {{
+        "topic": "{req.topic_name}",
+        "introduction": "Brief overview of the topic...",
+        "key_concepts": ["concept 1", "concept 2", ...],
+        "formulas": ["formula 1", "formula 2", ...],
+        "example_problem": {{
+            "question": "A sample problem...",
+            "solution": "Step-by-step solution..."
+        }}
+    }}
+    Important: Keep it educational and concise for students.
+    """
+    
+    resp = client.models.generate_content(
+        model="gemini-1.5-flash",
+        contents=prompt,
+        config={
+            "response_mime_type": "application/json"
+        }
+    )
+    
+    import json
+    return json.loads(resp.text)
 

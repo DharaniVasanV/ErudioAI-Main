@@ -1,10 +1,4 @@
-import React, {
-  createContext,
-  useContext,
-  useState,
-  ReactNode,
-  useEffect,
-} from "react";
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import {
   User,
   Subject,
@@ -14,7 +8,6 @@ import {
   RecentActivity,
   Notification,
   Exam,
-  ChatMessage,
 } from "@/app/types";
 import { toast } from "sonner";
 import { config } from "@/lib/config";
@@ -354,12 +347,10 @@ export const AppProvider = ({
 }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [subjects, setSubjects] =
-    useState<Subject[]>(MOCK_SUBJECTS);
+  const [subjects] = useState<Subject[]>(MOCK_SUBJECTS);
   const [topics, setTopics] = useState<Topic[]>(MOCK_TOPICS);
-  const [timetable, setTimetable] =
-    useState<TimeBlock[]>(MOCK_TIMETABLE);
-  const [exams, setExams] = useState<Exam[]>(MOCK_EXAMS);
+  const [timetable, setTimetable] = useState<TimeBlock[]>(MOCK_TIMETABLE);
+  const [exams] = useState<Exam[]>(MOCK_EXAMS);
   const [recentActivity, setRecentActivity] =
     useState<RecentActivity[]>(MOCK_ACTIVITY);
   const [notifications, setNotifications] = useState<
@@ -418,7 +409,7 @@ export const AppProvider = ({
               'Authorization': `Bearer ${token}`
             }
           });
-          
+
           if (res.ok) {
             const data = await res.json();
             const historyActivities = data.map((conv: any) => ({
@@ -428,10 +419,8 @@ export const AppProvider = ({
               timestamp: formatDistanceToNow(new Date(conv.created_at), { addSuffix: true }),
               refId: conv.id
             }));
-            
+
             setRecentActivity(prev => {
-              // Remove mock chat 'a1' and any previous chat history we loaded
-              // to avoid duplication, then prepend new history
               const others = prev.filter(a => a.id !== 'a1' && a.type !== 'Chat');
               return [...historyActivities, ...others];
             });
@@ -440,7 +429,7 @@ export const AppProvider = ({
           console.error('Error fetching chat history:', error);
         }
       };
-      
+
       fetchHistory();
     }
   }, [isAuthenticated]);
@@ -448,7 +437,7 @@ export const AppProvider = ({
   const login = (email: string, name?: string) => {
     const userData = {
       id: "u1",
-      name: name || email.split('@')[0], // Use name if provided, otherwise use email prefix
+      name: name || email.split('@')[0],
       email,
       level: "College" as const,
       streak: 12,
@@ -456,10 +445,7 @@ export const AppProvider = ({
 
     setUser(userData);
     setIsAuthenticated(true);
-
-    // Save to localStorage
     localStorage.setItem('erudio_user', JSON.stringify(userData));
-
     toast.success(`Welcome back, ${userData.name}!`);
   };
 
@@ -474,20 +460,14 @@ export const AppProvider = ({
 
     setUser(userData);
     setIsAuthenticated(true);
-
-    // Save to localStorage
     localStorage.setItem('erudio_user', JSON.stringify(userData));
-
     toast.success(`Account created successfully! Welcome, ${name}!`);
   };
 
   const logout = () => {
     setUser(null);
     setIsAuthenticated(false);
-
-    // Remove from localStorage
     localStorage.removeItem('erudio_user');
-
     toast.success('Signed out successfully');
   };
 
@@ -504,10 +484,8 @@ export const AppProvider = ({
     );
   };
 
-  const generateLessonPlan = (preferences: any) => {
-    // Mock generation logic
+  const generateLessonPlan = (_preferences: any) => {
     setTimeout(() => {
-      // Add some generated blocks
       const newBlocks: TimeBlock[] = [
         {
           id: `gen-${Date.now()}-1`,
@@ -583,12 +561,12 @@ export const AppProvider = ({
     );
   };
 
-  const scheduleRevision = (topicId: string, date: string) => {
+  const scheduleRevision = (topicId: string, _date: string) => {
     const topic = topics.find((t) => t.id === topicId);
     if (topic) {
       addTimeBlock({
         id: `rev-${Date.now()}`,
-        day: "Friday", // Simplify for prototype
+        day: "Friday",
         startTime: "18:00",
         endTime: "19:00",
         type: "Revision",
