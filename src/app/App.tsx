@@ -16,6 +16,7 @@ import { QuizPage } from '@/app/pages/QuizPage';
 import { AnalyticsPage } from '@/app/pages/AnalyticsPage';
 import { UploadFlow } from '@/app/pages/UploadFlow';
 import { AIChat } from '@/app/pages/chat/AIChat';
+import { ChatHistoryPage } from '@/app/pages/history/History';
 import { RemedialVideoPage } from '@/app/pages/RemedialVideoPage';
 import { RevisionModePage } from '@/app/pages/RevisionModePage';
 import { NotificationsPage } from '@/app/pages/NotificationsPage';
@@ -49,6 +50,7 @@ const AppRoutes = () => {
         <Route path="analytics" element={<AnalyticsPage />} />
         <Route path="chat" element={<AIChat />} />
         <Route path="chat/:chatId" element={<AIChat />} />
+        <Route path="history" element={<ChatHistoryPage />} />
         <Route path="notifications" element={<NotificationsPage />} />
         <Route path="exams" element={<ExamsPage />} />
         <Route path="reports" element={<ReportsPage />} />

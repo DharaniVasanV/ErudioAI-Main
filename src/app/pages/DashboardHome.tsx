@@ -36,7 +36,7 @@ export const DashboardHome = () => {
             let borderColor = 'border-orange-200';
             let textColor = 'text-orange-800';
             let buttonColor = 'bg-orange-600 hover:bg-orange-700';
-            
+
             if (notification.type === 'remedial_content') {
               bgColor = 'bg-red-50';
               borderColor = 'border-red-200';
@@ -55,7 +55,7 @@ export const DashboardHome = () => {
             }
 
             return (
-              <div 
+              <div
                 key={notification.id}
                 className={clsx(
                   'p-4 rounded-xl border-2 flex flex-col sm:flex-row sm:items-center justify-between gap-4',
@@ -71,7 +71,7 @@ export const DashboardHome = () => {
                     {notification.message}
                   </p>
                 </div>
-                <button 
+                <button
                   onClick={() => {
                     if (notification.actionType === 'video' && notification.actionId) {
                       navigate(`/video/${notification.actionId}`);
@@ -88,10 +88,10 @@ export const DashboardHome = () => {
                     buttonColor
                   )}
                 >
-                  {notification.type === 'remedial_content' ? 'Watch Now' : 
-                   notification.type === 'weekly_revision' ? 'Review Now' :
-                   notification.type === 'suggested_revision' ? 'Start Revision' :
-                   'View'}
+                  {notification.type === 'remedial_content' ? 'Watch Now' :
+                    notification.type === 'weekly_revision' ? 'Review Now' :
+                      notification.type === 'suggested_revision' ? 'Start Revision' :
+                        'View'}
                 </button>
               </div>
             );
@@ -102,7 +102,7 @@ export const DashboardHome = () => {
       {/* 1. Header & Quick Actions */}
       <div className="grid md:grid-cols-2 gap-4">
         {/* New Chat Card */}
-        <button 
+        <button
           onClick={handleNewChat}
           className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-all text-left group flex flex-col justify-between h-40"
         >
@@ -116,7 +116,7 @@ export const DashboardHome = () => {
         </button>
 
         {/* Upload & Setup Card */}
-        <button 
+        <button
           onClick={() => navigate('/upload-setup')}
           className="bg-gradient-to-br from-indigo-600 to-indigo-700 p-6 rounded-2xl shadow-sm hover:shadow-lg transition-all text-left group flex flex-col justify-between h-40"
         >
@@ -133,25 +133,25 @@ export const DashboardHome = () => {
       {/* 2. Streak & Exam Summary (Mobile/Tablet Friendly) */}
       <div className="flex flex-col sm:flex-row gap-4">
         <div className="flex-1 bg-white p-4 rounded-xl border border-slate-100 flex items-center gap-3 shadow-sm">
-           <div className="bg-orange-100 p-2 rounded-lg text-orange-600">
-             <Flame size={20} />
-           </div>
-           <div>
-             <p className="text-xs text-slate-500 font-medium uppercase">Current Streak</p>
-             <p className="text-lg font-bold text-slate-900">{user?.streak || 0} Days</p>
-           </div>
+          <div className="bg-orange-100 p-2 rounded-lg text-orange-600">
+            <Flame size={20} />
+          </div>
+          <div>
+            <p className="text-xs text-slate-500 font-medium uppercase">Current Streak</p>
+            <p className="text-lg font-bold text-slate-900">{user?.streak || 0} Days</p>
+          </div>
         </div>
-        
+
         {nextExam && (
-           <div className="flex-[2] bg-white p-4 rounded-xl border border-slate-100 flex items-center gap-3 shadow-sm">
-             <div className="bg-blue-100 p-2 rounded-lg text-blue-600">
-               <CalendarDays size={20} />
-             </div>
-             <div>
-               <p className="text-xs text-slate-500 font-medium uppercase">Upcoming Exam</p>
-               <p className="text-lg font-bold text-slate-900">{nextExam.name} <span className="text-slate-400 font-normal text-sm">in 12 days</span></p>
-             </div>
-           </div>
+          <div className="flex-[2] bg-white p-4 rounded-xl border border-slate-100 flex items-center gap-3 shadow-sm">
+            <div className="bg-blue-100 p-2 rounded-lg text-blue-600">
+              <CalendarDays size={20} />
+            </div>
+            <div>
+              <p className="text-xs text-slate-500 font-medium uppercase">Upcoming Exam</p>
+              <p className="text-lg font-bold text-slate-900">{nextExam.name} <span className="text-slate-400 font-normal text-sm">in 12 days</span></p>
+            </div>
+          </div>
         )}
       </div>
 
@@ -159,29 +159,29 @@ export const DashboardHome = () => {
       <section>
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-bold text-slate-800">Your recent studies</h2>
-          <button className="text-indigo-600 text-sm font-medium hover:underline">View all history</button>
+          <button onClick={() => navigate('/history')} className="text-indigo-600 text-sm font-medium hover:underline">View all history</button>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {recentActivity.slice(0, 6).map((activity) => (
-            <div 
+            <div
               key={activity.id}
               className="bg-white p-4 rounded-xl border border-slate-100 shadow-sm hover:border-indigo-200 cursor-pointer transition-colors"
               onClick={() => {
-                if(activity.type === 'Chat') navigate(`/chat/${activity.refId}`);
+                if (activity.type === 'Chat') navigate(`/chat/${activity.refId}`);
                 // Add other navigations as needed
               }}
             >
               <div className="flex items-start justify-between mb-2">
-                 <span className={clsx(
-                   "text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide",
-                   activity.type === 'Chat' && "bg-blue-100 text-blue-700",
-                   activity.type === 'Quiz' && "bg-purple-100 text-purple-700",
-                   activity.type === 'Video' && "bg-pink-100 text-pink-700",
-                   activity.type === 'Revision' && "bg-green-100 text-green-700",
-                 )}>
-                   {activity.type}
-                 </span>
-                 <span className="text-xs text-slate-400">{activity.timestamp}</span>
+                <span className={clsx(
+                  "text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide",
+                  activity.type === 'Chat' && "bg-blue-100 text-blue-700",
+                  activity.type === 'Quiz' && "bg-purple-100 text-purple-700",
+                  activity.type === 'Video' && "bg-pink-100 text-pink-700",
+                  activity.type === 'Revision' && "bg-green-100 text-green-700",
+                )}>
+                  {activity.type}
+                </span>
+                <span className="text-xs text-slate-400">{activity.timestamp}</span>
               </div>
               <h4 className="font-semibold text-slate-800 line-clamp-1">{activity.title}</h4>
               {activity.subtitle && <p className="text-sm text-slate-500 mt-1">{activity.subtitle}</p>}
@@ -192,48 +192,48 @@ export const DashboardHome = () => {
 
       {/* 4. Today's Plan */}
       <section>
-         <h2 className="text-xl font-bold text-slate-800 mb-4">Today's Plan</h2>
-         <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
-            {todaysPlan.length > 0 ? (
-               <div className="divide-y divide-slate-50">
-                 {todaysPlan.map((block) => (
-                   <div key={block.id} className="p-4 flex items-center gap-4 hover:bg-slate-50 transition-colors">
-                      <div className="w-16 text-center shrink-0">
-                         <p className="text-sm font-bold text-slate-700">{block.startTime}</p>
-                         <p className="text-xs text-slate-400">{block.endTime}</p>
-                      </div>
-                      <div className={clsx(
-                        "w-1 self-stretch rounded-full",
-                        block.type === 'Class' && "bg-gray-300",
-                        block.type === 'Study' && "bg-indigo-500",
-                        block.type === 'Revision' && "bg-orange-500",
-                      )}></div>
-                      <div className="flex-1">
-                        <h4 className="font-semibold text-slate-800">{block.title}</h4>
-                        <div className="flex items-center gap-2 mt-0.5">
-                           <span className="text-xs text-slate-500 font-medium uppercase">{block.type}</span>
-                           {block.subjectId && <span className="text-xs text-slate-400">• {topics.find(t => t.id === block.topicId)?.name || 'General'}</span>}
-                        </div>
-                      </div>
-                      <div className="shrink-0">
-                         {/* Status toggle mock */}
-                         <button className="text-slate-300 hover:text-green-500 transition-colors">
-                           <Circle size={24} />
-                         </button>
-                      </div>
-                   </div>
-                 ))}
-                 <div className="p-3 bg-slate-50 text-center">
-                    <button onClick={() => navigate('/timetable')} className="text-sm font-medium text-indigo-600 hover:underline">View full timetable</button>
-                 </div>
-               </div>
-            ) : (
-              <div className="p-8 text-center text-slate-500">
-                <p>No study blocks scheduled for today.</p>
-                <button onClick={() => navigate('/upload-setup')} className="mt-2 text-indigo-600 font-medium hover:underline">Create a plan</button>
+        <h2 className="text-xl font-bold text-slate-800 mb-4">Today's Plan</h2>
+        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+          {todaysPlan.length > 0 ? (
+            <div className="divide-y divide-slate-50">
+              {todaysPlan.map((block) => (
+                <div key={block.id} className="p-4 flex items-center gap-4 hover:bg-slate-50 transition-colors">
+                  <div className="w-16 text-center shrink-0">
+                    <p className="text-sm font-bold text-slate-700">{block.startTime}</p>
+                    <p className="text-xs text-slate-400">{block.endTime}</p>
+                  </div>
+                  <div className={clsx(
+                    "w-1 self-stretch rounded-full",
+                    block.type === 'Class' && "bg-gray-300",
+                    block.type === 'Study' && "bg-indigo-500",
+                    block.type === 'Revision' && "bg-orange-500",
+                  )}></div>
+                  <div className="flex-1">
+                    <h4 className="font-semibold text-slate-800">{block.title}</h4>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <span className="text-xs text-slate-500 font-medium uppercase">{block.type}</span>
+                      {block.subjectId && <span className="text-xs text-slate-400">• {topics.find(t => t.id === block.topicId)?.name || 'General'}</span>}
+                    </div>
+                  </div>
+                  <div className="shrink-0">
+                    {/* Status toggle mock */}
+                    <button className="text-slate-300 hover:text-green-500 transition-colors">
+                      <Circle size={24} />
+                    </button>
+                  </div>
+                </div>
+              ))}
+              <div className="p-3 bg-slate-50 text-center">
+                <button onClick={() => navigate('/timetable')} className="text-sm font-medium text-indigo-600 hover:underline">View full timetable</button>
               </div>
-            )}
-         </div>
+            </div>
+          ) : (
+            <div className="p-8 text-center text-slate-500">
+              <p>No study blocks scheduled for today.</p>
+              <button onClick={() => navigate('/upload-setup')} className="mt-2 text-indigo-600 font-medium hover:underline">Create a plan</button>
+            </div>
+          )}
+        </div>
       </section>
 
       {/* 5. Trending / Suggested */}
@@ -241,19 +241,19 @@ export const DashboardHome = () => {
         <h2 className="text-xl font-bold text-slate-800 mb-4">Trending topics students are learning</h2>
         <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
           {topics.filter(t => t.status !== 'Not started').map((topic) => (
-             <button 
-              key={topic.id} 
+            <button
+              key={topic.id}
               onClick={() => navigate(`/lessons/${topic.id}`)}
               className="shrink-0 bg-white border border-slate-200 px-4 py-2 rounded-full text-slate-700 font-medium whitespace-nowrap hover:border-indigo-300 hover:bg-indigo-50 transition-colors"
-             >
-               {topic.name}
-             </button>
+            >
+              {topic.name}
+            </button>
           ))}
           <button className="shrink-0 bg-white border border-slate-200 px-4 py-2 rounded-full text-slate-700 font-medium whitespace-nowrap">
-             Probability Basics
+            Probability Basics
           </button>
-           <button className="shrink-0 bg-white border border-slate-200 px-4 py-2 rounded-full text-slate-700 font-medium whitespace-nowrap">
-             Organic Chemistry
+          <button className="shrink-0 bg-white border border-slate-200 px-4 py-2 rounded-full text-slate-700 font-medium whitespace-nowrap">
+            Organic Chemistry
           </button>
         </div>
       </section>
