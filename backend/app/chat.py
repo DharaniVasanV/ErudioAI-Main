@@ -89,11 +89,19 @@ async def chat(
     # 1) Find or create conversation
     conv = None
     if req.conversation_id:
-        conv = (
-            db.query(Conversation)
-            .filter_by(id=req.conversation_id, user_id=user.id)
-            .first()
-        )
+        # Check if it's a valid UUID format (frontend might send temp 'chat-' IDs)
+        is_valid_uuid = True
+        try:
+            uuid.UUID(str(req.conversation_id))
+        except ValueError:
+            is_valid_uuid = False
+
+        if is_valid_uuid:
+            conv = (
+                db.query(Conversation)
+                .filter_by(id=req.conversation_id, user_id=user.id)
+                .first()
+            )
 
     if not conv:
         first_user_msg = next(
@@ -232,7 +240,16 @@ async def get_conversation_messages(
     user=Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    conv = db.query(Conversation).filter_by(id=conv_id, user_id=user.id).first()
+    try:
+        uuid.UUID(str(conv_id))
+    except ValueError:
+        return [] # Return empty list for invalid temp IDs
+
+    conv = (
+        db.query(Conversation)
+        .filter_by(id=conv_id, user_id=user.id)
+        .first()
+    )
     if not conv:
         from fastapi import HTTPException
         raise HTTPException(status_code=404, detail="Conversation not found")

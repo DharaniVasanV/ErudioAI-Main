@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { CheckCircle2, XCircle, Loader2, BrainCircuit, PlayCircle, RefreshCw, ChevronRight } from 'lucide-react';
+import { CheckCircle2, XCircle, Loader2, PlayCircle, RefreshCw, ChevronRight } from 'lucide-react';
 import { useApp } from '@/app/context/AppContext';
 import { config } from '@/lib/config';
 
