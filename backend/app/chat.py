@@ -27,6 +27,18 @@ You are ErudioAI, a friendly study assistant for school and college students.
 TOPIC_NAME: <short topic name>
 """
 
+MODELS_TO_TRY = [
+    "gemini-2.0-flash",
+    "gemini-3.1-pro",
+    "gemini-2.5-flash",
+    "gemini-1.5-flash",
+    "gemini-1.5-flash-8b",
+    "gemini-1.5-pro",
+    "gemini-2.0-flash-exp",
+    "gemini-3-flash-preview"
+]
+
+
 class ChatMessage(BaseModel):
     role: str  # "user" or "assistant"
     content: str
@@ -140,21 +152,9 @@ async def chat(
             "parts": [{"text": m.content}]
         })
 
-    # Try different Gemini model names
-    models_to_try = [
-        "gemini-2.0-flash",
-        "gemini-3.1-pro",
-        "gemini-2.5-flash",
-        "gemini-1.5-flash",
-        "gemini-1.5-flash-8b",
-        "gemini-1.5-pro",
-        "gemini-2.0-flash-exp",
-        "gemini-3-flash-preview"
-    ]
-    
     last_error = None
 
-    for model_name in models_to_try:
+    for model_name in MODELS_TO_TRY:
         try:
             print(f"Trying Gemini model: {model_name}")
             resp = client.models.generate_content(
@@ -309,17 +309,31 @@ async def generate_quiz(
     Ensure exactly 5 questions.
     """
     
-    # Use flash for speed
-    resp = client.models.generate_content(
-        model="gemini-1.5-flash",
-        contents=prompt,
-        config={
-            "response_mime_type": "application/json"
-        }
-    )
+    last_error = None
+    resp_text = None
+
+    for model_name in MODELS_TO_TRY:
+        try:
+            print(f"Trying Gemini model for quiz: {model_name}")
+            resp = client.models.generate_content(
+                model=model_name,
+                contents=prompt,
+                config={
+                    "response_mime_type": "application/json"
+                }
+            )
+            resp_text = resp.text
+            if resp_text:
+                break
+        except Exception as e:
+            last_error = e
+            continue
+
+    if not resp_text:
+        raise Exception(f"All Gemini models failed for quiz generation. Last error: {str(last_error)}")
     
     import json
-    return json.loads(resp.text)
+    return json.loads(resp_text)
 
 @router.post("/generate-topic-content", response_model=TopicContentSchema)
 async def generate_topic_content(
@@ -345,14 +359,29 @@ async def generate_topic_content(
     Important: Keep it educational and concise for students.
     """
     
-    resp = client.models.generate_content(
-        model="gemini-1.5-flash",
-        contents=prompt,
-        config={
-            "response_mime_type": "application/json"
-        }
-    )
+    last_error = None
+    resp_text = None
+
+    for model_name in MODELS_TO_TRY:
+        try:
+            print(f"Trying Gemini model for topic content: {model_name}")
+            resp = client.models.generate_content(
+                model=model_name,
+                contents=prompt,
+                config={
+                    "response_mime_type": "application/json"
+                }
+            )
+            resp_text = resp.text
+            if resp_text:
+                break
+        except Exception as e:
+            last_error = e
+            continue
+
+    if not resp_text:
+        raise Exception(f"All Gemini models failed for topic content generation. Last error: {str(last_error)}")
     
     import json
-    return json.loads(resp.text)
+    return json.loads(resp_text)
 
